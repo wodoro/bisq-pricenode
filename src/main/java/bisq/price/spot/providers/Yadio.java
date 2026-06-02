@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
  *  <ul>
  *      <li>ARS (Argentine Peso)</li>
  *      <li>LBP (Lebanese Pound)</li>
+ *      <li>ETB (Ethiopian Birr) — see bisq-network/bisq-mobile#1434</li>
  *  </ul>
  *
  * Further analysis could be made to incorporate more currencies like VES (Venezuela).
@@ -61,7 +62,7 @@ class Yadio extends ExchangeRateProvider implements BlueRateProvider {
 
     private static final String YADIO_EXCHANGES_API_ENDPOINT = "https://api.yadio.io/exrates";
 
-    private static final Set<String> YADIO_CURRENCIES_WHITELIST = Set.of("ARS", "BOB", "DOP", "EGP", "LBP", "PYG");
+    private static final Set<String> YADIO_CURRENCIES_WHITELIST = Set.of("ARS", "BOB", "DOP", "EGP", "ETB", "LBP", "PYG");
 
     private final WebClient webClient = WebClient.create();
 
