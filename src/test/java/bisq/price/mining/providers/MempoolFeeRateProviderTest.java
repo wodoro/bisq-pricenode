@@ -25,6 +25,7 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.web.client.RestClientException;
 
 import java.time.Instant;
+import java.util.Map;
 
 import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,11 +41,20 @@ public class MempoolFeeRateProviderTest {
 
     @Test
     public void doGet_successfulCall() {
-        MempoolFeeRateProvider feeRateProvider = new MempoolFeeRateProvider.First(env);
+        // Offline: override the fee-prediction fetch seam with a canned response so
+        // the fee-selection/clamping logic runs without any network call.
+        MempoolFeeRateProvider feeRateProvider = new MempoolFeeRateProvider.First(env) {
+            @Override
+            protected Map<String, Long> getFeeRatePredictions() {
+                return Map.of(
+                        "fastestFee", 15L,
+                        "halfHourFee", 12L,
+                        "hourFee", 10L,
+                        "economyFee", 1L,
+                        "minimumFee", 1L);
+            }
+        };
 
-        // Make a call to the API, retrieve the recommended fee rate
-        // If the API call fails, or the response body cannot be parsed, the test will
-        // fail with an exception
         FeeRate retrievedFeeRate = feeRateProvider.doGet();
 
         // Check that the FeeRateProvider returns a fee within the defined parameters

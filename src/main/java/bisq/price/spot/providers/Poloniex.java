@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
@@ -45,7 +44,7 @@ class Poloniex extends ExchangeRateProvider {
 
     @Override
     public Set<ExchangeRate> doGet() {
-        Flux<PoloniexTicker> poloniexTickerFlux = WebClient.create()
+        Flux<PoloniexTicker> poloniexTickerFlux = webClient()
                 .get()
                 .uri(POLONIEX_URL)
                 .accept(MediaType.APPLICATION_JSON)

@@ -17,17 +17,47 @@
 
 package bisq.price.spot.providers;
 
-import bisq.price.AbstractExchangeRateProviderTest;
+import bisq.price.spot.ExchangeRate;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.StandardEnvironment;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * Offline test: a stubbed WebClient feeds a canned Poloniex ticker array, so
+ * the BTC-pair filtering and rate construction run without any network call.
+ */
 @Slf4j
-public class PoloniexTest extends AbstractExchangeRateProviderTest {
+public class PoloniexTest {
+
+    // ETH and LTC are in Poloniex's supported set; XRP is not -> must be filtered out.
+    private static final String CANNED_RESPONSE = """
+            [
+              {"symbol":"ETH_BTC","price":"0.05"},
+              {"symbol":"LTC_BTC","price":"0.0012"},
+              {"symbol":"XRP_BTC","price":"0.00001"}
+            ]""";
 
     @Test
-    public void doGet_successfulCall() {
-        doGet_successfulCall(new Poloniex(new StandardEnvironment()));
-    }
+    public void doGet_parsesSupportedBtcPairsOffline() {
+        Poloniex provider = new Poloniex(new StandardEnvironment()) {
+            @Override
+            protected WebClient webClient() {
+                return StubWebClient.returningJson(CANNED_RESPONSE);
+            }
+        };
 
+        Set<String> currencies = provider.doGet().stream()
+                .map(ExchangeRate::getCurrency)
+                .collect(Collectors.toSet());
+
+        assertTrue(currencies.contains("ETH"), "ETH expected, got: " + currencies);
+        assertTrue(currencies.contains("LTC"), "LTC expected, got: " + currencies);
+        assertTrue(!currencies.contains("XRP"), "unsupported XRP must be filtered, got: " + currencies);
+    }
 }

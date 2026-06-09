@@ -17,47 +17,65 @@
 
 package bisq.price.spot.providers;
 
-import bisq.price.AbstractExchangeRateProviderTest;
 import bisq.price.spot.ExchangeRate;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.StandardEnvironment;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
+/**
+ * Offline test: a stubbed WebClient feeds a canned Yadio response so the
+ * whitelist + validity filtering and rate construction run without any network
+ * call. The timestamp is "now" so the ticker passes its freshness check.
+ */
 @Slf4j
-public class YadioTest extends AbstractExchangeRateProviderTest {
+public class YadioTest {
+
+    // ARS + ETB are whitelisted; ZZZ is not -> must be filtered out.
+    private static String cannedResponse() {
+        long nowMs = System.currentTimeMillis();
+        return String.format("""
+                {"BTC":1.0E-5,"base":"USD","timestamp":%d,
+                 "USD":{"ARS":1000.0,"ETB":120.0,"ZZZ":1.0}}""", nowMs);
+    }
+
+    private Yadio provider() {
+        return new Yadio(new StandardEnvironment()) {
+            @Override
+            protected WebClient webClient() {
+                return StubWebClient.returningJson(cannedResponse());
+            }
+        };
+    }
 
     @Test
-    public void doGet_successfulCall() {
-        doGet_successfulCall(new Yadio(new StandardEnvironment()));
+    public void doGet_parsesWhitelistedRatesOffline() {
+        Set<String> currencies = provider().doGet().stream()
+                .map(ExchangeRate::getCurrency)
+                .collect(Collectors.toSet());
+
+        assertTrue(currencies.contains("ARS"), "ARS expected, got: " + currencies);
+        assertFalse(currencies.contains("ZZZ"), "non-whitelisted ZZZ must be filtered, got: " + currencies);
     }
 
     /**
      * Pins the whitelist behavior for ETB (Ethiopian Birr) so that any future
      * change accidentally removing it from {@code YADIO_CURRENCIES_WHITELIST}
-     * would be caught here.
-     * <p>
-     * Lives alongside {@link #doGet_successfulCall()} which is the broader
-     * smoke test. We tolerate the live Yadio API being unavailable (empty
-     * result) to avoid CI flakiness — when the API is reachable, ETB must
-     * be among the returned rates. See bisq-network/bisq-mobile#1434.
+     * would be caught here. See bisq-network/bisq-mobile#1434.
      */
     @Test
-    public void doGet_returnsETBWhenApiReachable() {
-        Set<ExchangeRate> rates = new Yadio(new StandardEnvironment()).doGet();
-        assumeFalse(rates.isEmpty(), "Yadio API returned no rates (likely network/API issue); skipping ETB assertion");
-
-        Set<String> currencies = rates.stream()
+    public void doGet_returnsETB() {
+        Set<String> currencies = provider().doGet().stream()
                 .map(ExchangeRate::getCurrency)
                 .collect(Collectors.toSet());
 
         assertTrue(currencies.contains("ETB"),
                 "ETB should be among Yadio's returned rates. Actual currencies: " + currencies);
     }
-
 }

@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    name: Unit tests (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Run offline test suite
+        run: ./gradlew test
+
+  live-test:
+    name: Unit tests (live)
+    runs-on: ubuntu-latest
+    # Runs the real-API integration tests alongside the offline suite. They
+    # tolerate unreachable/geoblocked endpoints (skip), failing only on genuine
+    # response-contract drift. External APIs can be flaky from CI, so this job is
+    # informational and does not block merges.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Run live integration tests
+        run: ./gradlew liveTest

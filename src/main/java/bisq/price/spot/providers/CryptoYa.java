@@ -24,7 +24,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -68,8 +67,6 @@ public class CryptoYa extends ExchangeRateProvider implements BlueRateProvider {
 
     private static final String CRYPTO_YA_BTC_ARS_API_URL = "https://criptoya.com/api/btc/ars/0.1";
 
-    private final WebClient webClient = WebClient.create();
-
     public CryptoYa(Environment env) {
         super(env, PROVIDER_NAME, "cryptoya", Duration.ofMinutes(1));
     }
@@ -94,7 +91,7 @@ public class CryptoYa extends ExchangeRateProvider implements BlueRateProvider {
     }
 
     private Map<String, CryptoYaTicker> fetchArsBlueMarketData() {
-        return webClient.get()
+        return webClient().get()
                 .uri(CRYPTO_YA_BTC_ARS_API_URL)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()

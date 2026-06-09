@@ -25,7 +25,6 @@ import bisq.price.util.coingecko.CoinGeckoTicker;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 
@@ -85,7 +84,7 @@ class CoinGecko extends ExchangeRateProvider {
     }
 
     private CoinGeckoMarketData getMarketData() {
-        return WebClient.create().get()
+        return webClient().get()
                 .uri(CoinGecko.GET_EXCHANGE_RATES_URL)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()

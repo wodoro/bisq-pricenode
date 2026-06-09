@@ -471,7 +471,7 @@ public class ExchangeRateServiceTest {
             }
 
             @Override
-            protected Set<ExchangeRate> doGet() {
+            public Set<ExchangeRate> doGet() {
                 HashSet<ExchangeRate> exchangeRates = new HashSet<>();
 
                 // Simulate the required amount of rates
@@ -512,7 +512,7 @@ public class ExchangeRateServiceTest {
             }
 
             @Override
-            protected Set<ExchangeRate> doGet() {
+            public Set<ExchangeRate> doGet() {
                 HashSet<ExchangeRate> exchangeRates = new HashSet<>();
 
                 // Simulate the required amount of rates
@@ -559,7 +559,7 @@ public class ExchangeRateServiceTest {
             }
 
             @Override
-            protected Set<ExchangeRate> doGet() {
+            public Set<ExchangeRate> doGet() {
                 HashSet<ExchangeRate> exchangeRates = new HashSet<>();
                 exchangeRates.add(new ExchangeRate(
                         currencyCode,
