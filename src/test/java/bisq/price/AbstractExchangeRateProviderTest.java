@@ -2,6 +2,7 @@ package bisq.price;
 
 import bisq.price.spot.ExchangeRate;
 import bisq.price.spot.ExchangeRateProvider;
+import bisq.price.spot.MockedExchangeSupport;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,28 +10,32 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 public abstract class AbstractExchangeRateProviderTest {
 
+    /**
+     * Exercises an XChange-based provider's rate-parsing path fully offline.
+     *
+     * The provider is wrapped by {@link MockedExchangeSupport} in a Mockito spy
+     * whose {@code createExchange} seam returns a mocked exchange serving canned
+     * BTC/EUR and BTC/USD tickers. This replaces the former live API call: the
+     * test is now deterministic and makes no network calls, while still running
+     * the real desired-pair filtering and {@link ExchangeRate} construction.
+     */
     protected void doGet_successfulCall(ExchangeRateProvider exchangeProvider) {
+        ExchangeRateProvider provider = MockedExchangeSupport.withMockedExchange(exchangeProvider);
 
-        // Use the XChange library to call the provider API, in order to retrieve the
-        // exchange rates. If the API call fails, or the response body cannot be parsed,
-        // the test will fail with an exception
-        Set<ExchangeRate> retrievedExchangeRates = exchangeProvider.doGet();
-
-        // Log the valid exchange rates which were retrieved
-        // Useful when running the tests, to easily identify which exchanges provide
-        // useful pairs
+        Set<ExchangeRate> retrievedExchangeRates = provider.doGet();
         retrievedExchangeRates.forEach(e -> log.info("Found exchange rate " + e.toString()));
 
-        // Sanity checks
-        // sometimes an exchange will return no rates,
-        // for example if the API is down or geoblocking the requester IP.
-        assertTrue(retrievedExchangeRates.size() >= 0);
-        checkProviderCurrencyPairs(exchangeProvider, retrievedExchangeRates);
+        // The canned tickers map to EUR and USD, both Bisq-supported fiat, so the
+        // provider must yield rates. (A provider that excludes one still yields the other.)
+        assertFalse(retrievedExchangeRates.isEmpty(),
+                "provider should parse the mocked tickers into exchange rates");
+        checkProviderCurrencyPairs(provider, retrievedExchangeRates);
     }
 
     /**

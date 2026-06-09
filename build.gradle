@@ -13,6 +13,11 @@ group 'bisq'
 apply plugin: "org.springframework.boot"
 apply plugin: 'io.spring.dependency-management'
 
+// Pin a couple of transitive components to the latest patch within the same
+// line the Spring Boot 4.0 BOM already uses (the BOM lags the newest patch).
+ext['netty.version'] = '4.2.15.Final'   // BOM ships 4.2.12
+ext['tomcat.version'] = '11.0.22'       // BOM ships 11.0.21
+
 version = file("src/main/resources/version.txt").text.trim()
 
 application {
@@ -54,5 +59,24 @@ clean.doFirst {
 }
 
 test {
-    useJUnitPlatform()
+    // Default suite is fast, offline and deterministic: exclude live tests that
+    // hit real external exchange/fee APIs. Run those via the `liveTest` task.
+    useJUnitPlatform {
+        excludeTags 'live'
+    }
+}
+
+// Live integration tests: exercise the real upstream APIs (and the real
+// response parsing) to catch exchange contract/endpoint breakage that the
+// mocked unit tests cannot. Opt-in and never cached, so it always re-runs.
+tasks.register('liveTest', Test) {
+    group = 'verification'
+    description = 'Runs live tests that call real external APIs (tag: live).'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'live'
+    }
+    outputs.upToDateWhen { false }
+    shouldRunAfter test
 }

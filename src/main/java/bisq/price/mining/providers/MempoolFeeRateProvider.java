@@ -102,7 +102,9 @@ abstract class MempoolFeeRateProvider extends FeeRateProvider {
         return new FeeRate("BTC", estimatedFeeRate, economyFee, Instant.now().getEpochSecond());
     }
 
-    private Map<String, Long> getFeeRatePredictions() {
+    // Package-visible seam: tests override this to supply canned predictions and
+    // exercise the fee-selection/clamping logic offline, without network calls.
+    protected Map<String, Long> getFeeRatePredictions() {
         return WebClient.create().get()
                 .uri("https://" + getMempoolApiHostname() + "/api/v1/fees/recommended")
                 .accept(MediaType.APPLICATION_JSON)

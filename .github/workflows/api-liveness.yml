@@ -1,0 +1,32 @@
+name: API liveness
+
+on:
+  workflow_dispatch:
+
+jobs:
+  liveness:
+    name: Liveness — ${{ matrix.api.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      # Run every endpoint check in parallel and report each independently;
+      # one dead API must not cancel the others.
+      fail-fast: false
+      matrix:
+        api:
+          - { name: coingecko,      url: 'https://api.coingecko.com/api/v3/exchange_rates' }
+          - { name: yadio,          url: 'https://api.yadio.io/exrates' }
+          - { name: poloniex,       url: 'https://api.poloniex.com/markets/price' }
+          # criptoya is intentionally omitted: it geoblocks non-LATAM IPs and returns
+          # 403 from GitHub-hosted runners, which would make this check permanently red.
+          # It is still covered by the local `liveTest` task.
+          - { name: bluelytics,     url: 'https://api.bluelytics.com.ar/v2/latest' }
+          - { name: mempool-space,  url: 'https://mempool.space/api/v1/fees/recommended' }
+          - { name: mempool-emzy,   url: 'https://mempool.emzy.de/api/v1/fees/recommended' }
+          - { name: mempool-ninja,  url: 'https://mempool.ninja/api/v1/fees/recommended' }
+          - { name: mempool-bisq,   url: 'https://mempool.bisq.services/api/v1/fees/recommended' }
+    steps:
+      # Strict: fail (non-zero exit via -f) on any non-2xx response or connection
+      # error. Unlike the local `liveTest` task, this does NOT tolerate an
+      # unreachable endpoint — a dead/changed upstream turns this check red.
+      - name: Check ${{ matrix.api.name }} is alive
+        run: curl -fsS --retry 2 --retry-delay 3 --max-time 20 -o /dev/null -w 'HTTP %{http_code}\n' "${{ matrix.api.url }}"

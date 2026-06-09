@@ -24,7 +24,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -63,8 +62,6 @@ class Yadio extends ExchangeRateProvider implements BlueRateProvider {
     private static final String YADIO_EXCHANGES_API_ENDPOINT = "https://api.yadio.io/exrates";
 
     private static final Set<String> YADIO_CURRENCIES_WHITELIST = Set.of("ARS", "BOB", "DOP", "EGP", "ETB", "LBP", "PYG");
-
-    private final WebClient webClient = WebClient.create();
 
     public Yadio(Environment env) {
         super(env, PROVIDER_NAME, "yadio", Duration.ofMinutes(1));
@@ -108,7 +105,7 @@ class Yadio extends ExchangeRateProvider implements BlueRateProvider {
     }
 
     private Map<String, Object> fetchBaseMarketData() {
-        return webClient.get()
+        return webClient().get()
                 .uri(YADIO_EXCHANGES_API_ENDPOINT)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()

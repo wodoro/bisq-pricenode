@@ -56,8 +56,13 @@ import java.util.stream.Stream;
 public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRate>> {
 
     private static final long STALE_PRICE_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(10);
-    private static Set<String> SUPPORTED_CRYPTO_CURRENCIES = new HashSet<>();
-    private static Set<String> SUPPORTED_FIAT_CURRENCIES = new HashSet<>();
+    // Instance-scoped (not static): each provider derives its supported-currency
+    // set from the same environment, so the values are identical in production,
+    // but per-instance state keeps providers independent and tests deterministic
+    // (a shared static cache was order-dependent and locked in whichever env
+    // initialised it first).
+    private Set<String> SUPPORTED_CRYPTO_CURRENCIES = new HashSet<>();
+    private Set<String> SUPPORTED_FIAT_CURRENCIES = new HashSet<>();
     private final Set<String> providerExclusionList = new HashSet<>();
     @Getter
     private final String name;
@@ -172,11 +177,35 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
         return new HashSet<>();
     }
 
+    /**
+     * Creates the XChange {@link Exchange} client for the given exchange class.
+     * Extracted as a seam so tests can supply a mocked exchange and exercise the
+     * rate-parsing logic offline, without any network calls.
+     */
+    // The provider's fetch entry point. Every concrete provider already exposes this
+    // as public; declaring it public here makes that the contract of the abstraction.
+    @Override
+    public abstract Set<ExchangeRate> doGet();
+
+    protected Exchange createExchange(Class<? extends Exchange> exchangeClass) {
+        return ExchangeFactory.INSTANCE.createExchange(exchangeClass.getName());
+    }
+
+    /**
+     * The {@link org.springframework.web.reactive.function.client.WebClient} used
+     * by providers that fetch over plain HTTP (rather than via XChange). Extracted
+     * as a seam so tests can inject a client backed by a stubbed exchange function
+     * and exercise the real response deserialization offline.
+     */
+    protected org.springframework.web.reactive.function.client.WebClient webClient() {
+        return org.springframework.web.reactive.function.client.WebClient.create();
+    }
+
     private Set<ExchangeRate> doGetInternal(Class<? extends Exchange> exchangeClass) {
         Set<ExchangeRate> result = new HashSet<>();
 
         // Initialize XChange objects
-        Exchange exchange = ExchangeFactory.INSTANCE.createExchange(exchangeClass.getName());
+        Exchange exchange = createExchange(exchangeClass);
         MarketDataService marketDataService = exchange.getMarketDataService();
 
         // Retrieve all currency pairs supported by the exchange
