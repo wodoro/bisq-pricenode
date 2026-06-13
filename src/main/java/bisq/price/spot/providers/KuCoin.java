@@ -20,7 +20,7 @@ package bisq.price.spot.providers;
 import bisq.price.spot.ExchangeRate;
 import bisq.price.spot.ExchangeRateProvider;
 
-import org.knowm.xchange.binance.BinanceExchange;
+import org.knowm.xchange.kucoin.KucoinExchange;
 
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -30,19 +30,16 @@ import java.time.Duration;
 import java.util.Set;
 
 @Component
-class Binance extends ExchangeRateProvider implements BlueRateProvider {
+class KuCoin extends ExchangeRateProvider {
 
-    public Binance(Environment env) {
-        super(env, "BINANCE", "binance", Duration.ofMinutes(1));
+    public KuCoin(Environment env) {
+        super(env, "KUCOIN", "kucoin", Duration.ofMinutes(1));
     }
 
     @Override
     public Set<ExchangeRate> doGet() {
-        // Supported fiat: EUR, GBP, NGN, RUB, TRY, UAH, ZAR
-        // Supported alts: BEAM, DAI, DASH, DOGE, ETC, ETH, LTC, NAV, PIVX, XZC,
-        // ZEC, ZEN
-        // Note: XMR was delisted by Binance (Feb 2024), so the bulk ticker no
-        // longer returns an XMR/BTC pair and this provider contributes no XMR rate.
-        return doGet(BinanceExchange.class);
+        // Added as a liquid XMR/BTC source (alongside Kraken and Bitfinex),
+        // replacing the thin Poloniex book and the delisted Binance pair.
+        return doGet(KucoinExchange.class);
     }
 }
