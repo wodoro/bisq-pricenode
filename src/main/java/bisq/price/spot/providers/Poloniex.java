@@ -34,8 +34,11 @@ import java.util.stream.Collectors;
 
 @Component
 class Poloniex extends ExchangeRateProvider {
+    // XMR intentionally excluded: Poloniex's XMR/BTC book is thin, so under
+    // volatility its rate can go stale/diverge and skew the aggregate average.
+    // XMR/BTC is sourced from the more liquid Kraken, Bitfinex and KuCoin instead.
     private static final List<String> SUPPORTED_CURRENCIES =
-            List.of("DASH", "DOGE", "ETC", "ETH", "LTC", "XMR", "ZEC");
+            List.of("DASH", "DOGE", "ETC", "ETH", "LTC", "ZEC");
     private static final String POLONIEX_URL = "https://api.poloniex.com/markets/price";
     private static final String PROVIDER_NAME = "POLO";
     public Poloniex(Environment env) {

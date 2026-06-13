@@ -60,7 +60,7 @@ public class LiveProvidersIT {
         return Stream.of(
                 new Binance(ENV), new Bitfinex(ENV), new Bitflyer(ENV), new Bitstamp(ENV),
                 new BTCMarkets(ENV), new CoinbasePro(ENV), new Coinone(ENV),
-                new IndependentReserve(ENV), new Kraken(ENV), new Luno(ENV),
+                new IndependentReserve(ENV), new Kraken(ENV), new KuCoin(ENV), new Luno(ENV),
                 new MercadoBitcoin(ENV), new Paribu(ENV),
                 new CoinGecko(ENV), new Poloniex(ENV), new Yadio(ENV), new CryptoYa(ENV)
         ).map(p -> Arguments.of(p.getName(), p));

@@ -16,9 +16,25 @@ jobs:
           - { name: coingecko,      url: 'https://api.coingecko.com/api/v3/exchange_rates' }
           - { name: yadio,          url: 'https://api.yadio.io/exrates' }
           - { name: poloniex,       url: 'https://api.poloniex.com/markets/price' }
-          # criptoya is intentionally omitted: it geoblocks non-LATAM IPs and returns
-          # 403 from GitHub-hosted runners, which would make this check permanently red.
-          # It is still covered by the local `liveTest` task.
+          # XChange-based exchange providers. The URL hit here is the public bulk
+          # endpoint each provider's XChange client relies on (instruments or
+          # all-tickers), so a non-2xx here flags upstream breakage the strict way.
+          - { name: kraken,         url: 'https://api.kraken.com/0/public/AssetPairs' }
+          - { name: kucoin,         url: 'https://api.kucoin.com/api/v1/market/allTickers' }
+          - { name: bitfinex,       url: 'https://api-pub.bitfinex.com/v2/tickers?symbols=ALL' }
+          - { name: bitstamp,       url: 'https://www.bitstamp.net/api/v2/ticker/' }
+          - { name: coinbasepro,    url: 'https://api.exchange.coinbase.com/products' }
+          - { name: bitflyer,       url: 'https://api.bitflyer.com/v1/ticker' }
+          - { name: btcmarkets,     url: 'https://api.btcmarkets.net/v3/markets/tickers?marketId=BTC-AUD' }
+          - { name: coinone,        url: 'https://api.coinone.co.kr/ticker?currency=all' }
+          - { name: indepreserve,   url: 'https://api.independentreserve.com/Public/GetValidPrimaryCurrencyCodes' }
+          - { name: luno,           url: 'https://api.luno.com/api/1/tickers' }
+          - { name: paribu,         url: 'https://www.paribu.com/ticker' }
+          # binance and mercadobitcoin are intentionally omitted: binance returns
+          # HTTP 451 (legal geoblock) and mercadobitcoin HTTP 403 to GitHub-hosted
+          # runners, which would make these checks permanently red. criptoya is
+          # likewise omitted: it geoblocks non-LATAM IPs and returns 403. All three
+          # remain covered by the local `liveTest` task.
           - { name: bluelytics,     url: 'https://api.bluelytics.com.ar/v2/latest' }
           - { name: mempool-space,  url: 'https://mempool.space/api/v1/fees/recommended' }
           - { name: mempool-emzy,   url: 'https://mempool.emzy.de/api/v1/fees/recommended' }
